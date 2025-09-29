@@ -18,15 +18,15 @@ export class ToolHandlers {
 
   static async createXppObject(args: any, requestId: string): Promise<any> {
     // DEBUG: Let's see what we actually receive
-    console.log('🔍 DEBUG createXppObject received args:', JSON.stringify(args, null, 2));
+    console.error('🔍 DEBUG createXppObject received args:', JSON.stringify(args, null, 2));
     
     // Handle the client's argument wrapping - check both direct args and wrapped args
     const actualArgs = args?.arguments || args;
-    console.log('🔍 DEBUG actualArgs after unwrapping:', JSON.stringify(actualArgs, null, 2));
+    console.error('🔍 DEBUG actualArgs after unwrapping:', JSON.stringify(actualArgs, null, 2));
     
     // Special case: if no args provided, return cached object types
     if (!actualArgs || Object.keys(actualArgs).length === 0) {
-      console.log('📋 No parameters provided, returning cached object types from index...');
+      console.error('📋 No parameters provided, returning cached object types from index...');
       
       try {
         const cachedTypes = await ObjectIndexManager.getCachedObjectTypes();
@@ -131,7 +131,7 @@ export class ToolHandlers {
         );
       }
       
-      console.log(`🔍 Discovering parameters for object type: ${params.objectType}`);
+      console.error(`🔍 Discovering parameters for object type: ${params.objectType}`);
       
       try {
         const discoveryResult = await ObjectCreators.discoverParameters(params.objectType);
@@ -280,7 +280,7 @@ export class ToolHandlers {
     }
 
     // Note: xppPath no longer required - VS2022 service handles all operations
-    console.log(`Creating ${params.objectType} '${params.objectName}' using direct VS2022 service integration...`);
+    console.error(`Creating ${params.objectType} '${params.objectName}' using direct VS2022 service integration...`);
     
     let content: string;
     const startTime = Date.now();
@@ -337,7 +337,7 @@ export class ToolHandlers {
   }
 
   static async createForm(args: any, requestId: string): Promise<any> {
-    console.log('🎯 Starting createForm with args:', JSON.stringify(args, null, 2));
+    console.error('🎯 Starting createForm with args:', JSON.stringify(args, null, 2));
     
     const actualArgs = args?.arguments || args;
     
@@ -370,15 +370,15 @@ export class ToolHandlers {
       const { D365ServiceClient } = await import('./d365-service-client.js');
       const client = new D365ServiceClient('mcp-xpp-d365-service', 10000, 60000);
       
-      console.log('🔗 Connecting to D365 service...');
+      console.error('🔗 Connecting to D365 service...');
       await client.connect();
-      console.log('✅ Connected to D365 service');
+      console.error('✅ Connected to D365 service');
 
       let response;
 
       if (params.mode === "list_patterns") {
         // Handle pattern discovery
-        console.log('🔍 Discovering available patterns...');
+        console.error('🔍 Discovering available patterns...');
         response = await client.sendRequest('discover_patterns', undefined, {});
       } else if (params.mode === "create") {
         // Handle form creation
@@ -390,7 +390,7 @@ export class ToolHandlers {
           );
         }
         
-        console.log(`🏗️ Creating form: ${params.formName}`);
+        console.error(`🏗️ Creating form: ${params.formName}`);
         
         const formParams = {
           formName: params.formName,
@@ -405,7 +405,7 @@ export class ToolHandlers {
 
       // Always disconnect
       await client.disconnect();
-      console.log('🔌 Disconnected from D365 service');
+      console.error('🔌 Disconnected from D365 service');
 
       if (params.mode === "list_patterns") {
         return await ToolHandlers.formatPatternListResponse(response, requestId);
@@ -456,10 +456,10 @@ export class ToolHandlers {
   }
 
   private static async formatFormCreationResponse(response: any, requestId: string): Promise<any> {
-    console.log('🐛 DEBUG: formatFormCreationResponse called with response:', JSON.stringify(response, null, 2));
+    console.error('🐛 DEBUG: formatFormCreationResponse called with response:', JSON.stringify(response, null, 2));
     
     if (response?.Success && response?.Data?.Success) {
-      console.log('🐛 DEBUG: Entering success path');
+      console.error('🐛 DEBUG: Entering success path');
       let content = `✅ **Form Created Successfully**\n\n`;
       content += `📄 **Form Name:** ${response.Data.FormName}\n`;
       content += `📦 **Model:** ${response.Data.Model}\n`;
@@ -479,7 +479,7 @@ export class ToolHandlers {
         const formName = response.Data.FormName;
         const filePath = `Models/${model}/AxForm/${formName}.xml`;
         
-        console.log(`🔍 Attempting to add form to index: ${formName} (AxForm) in model ${model} at ${filePath}`);
+        console.error(`🔍 Attempting to add form to index: ${formName} (AxForm) in model ${model} at ${filePath}`);
         
         const indexSuccess = await ObjectIndexManager.addObjectToIndex(
           formName,
@@ -488,7 +488,7 @@ export class ToolHandlers {
           filePath
         );
         
-        console.log(`🔍 Index operation result: ${indexSuccess}`);
+        console.error(`🔍 Index operation result: ${indexSuccess}`);
         
         if (indexSuccess) {
           content += `\n🔍 Form added to search index - immediately searchable`;
@@ -521,13 +521,13 @@ export class ToolHandlers {
     try {
       const { objectName, objectType, cascadeDelete } = schema.parse(args);
       
-      console.log(`🗑️ Deleting D365 object: ${objectName} (${objectType}), cascade: ${cascadeDelete || false}`);
+      console.error(`🗑️ Deleting D365 object: ${objectName} (${objectType}), cascade: ${cascadeDelete || false}`);
       
       // Let C# service validate object existence - don't pre-validate in cache
-      console.log(`📡 Sending delete request to C# service for ${objectName} (${objectType})`);
+      console.error(`📡 Sending delete request to C# service for ${objectName} (${objectType})`);
 
       // Use D365ServiceClient to communicate via named pipe
-      console.log(`🔄 Connecting to D365 service to delete object: ${objectName} (${objectType})`);
+      console.error(`🔄 Connecting to D365 service to delete object: ${objectName} (${objectType})`);
       
       // Import D365ServiceClient dynamically (consistent with other handlers)
       const { D365ServiceClient } = await import('./d365-service-client.js');
@@ -543,7 +543,7 @@ export class ToolHandlers {
       await client.disconnect();
       
       if (response.Success) {
-        console.log(`✅ Object deleted successfully: ${objectName} (${objectType})`);
+        console.error(`✅ Object deleted successfully: ${objectName} (${objectType})`);
         
         // Update cache by removing the deleted object
         const sqliteLookup = new SQLiteObjectLookup();
@@ -1494,7 +1494,7 @@ export class ToolHandlers {
   }
 
   static async discoverModificationCapabilities(args: any, requestId: string): Promise<any> {
-    console.log('🔍 Starting discoverModificationCapabilities with args:', JSON.stringify(args, null, 2));
+    console.error('🔍 Starting discoverModificationCapabilities with args:', JSON.stringify(args, null, 2));
     
     const actualArgs = args?.arguments || args;
     
@@ -1512,25 +1512,25 @@ export class ToolHandlers {
     const { objectType } = validationResult.data;
 
     try {
-      console.log(`🔍 Discovering modification capabilities for object type: ${objectType}`);
+      console.error(`🔍 Discovering modification capabilities for object type: ${objectType}`);
 
       // Import D365ServiceClient dynamically to avoid circular dependencies
       const { D365ServiceClient } = await import('./d365-service-client.js');
       const client = new D365ServiceClient('mcp-xpp-d365-service', 10000, 30000);
       
       // Connect to the service
-      console.log('🔗 Connecting to D365 service...');
+      console.error('🔗 Connecting to D365 service...');
       await client.connect();
-      console.log('✅ Connected to D365 service');
+      console.error('✅ Connected to D365 service');
 
       // Discover modification capabilities
-      console.log(`🚀 Requesting modification capabilities for ${objectType}...`);
+      console.error(`🚀 Requesting modification capabilities for ${objectType}...`);
       const response = await client.discoverModificationCapabilities(objectType);
-      console.log('📦 Raw service response:', JSON.stringify(response, null, 2));
+      console.error('📦 Raw service response:', JSON.stringify(response, null, 2));
 
       // Ensure we disconnect
       await client.disconnect();
-      console.log('🔌 Disconnected from D365 service');
+      console.error('🔌 Disconnected from D365 service');
 
       // Extract the capabilities data
       const capabilities = response.Data || response.data || response;
@@ -1566,7 +1566,7 @@ export class ToolHandlers {
       const inheritanceHierarchy = capabilities.InheritanceHierarchy || {};
       const reflectionInfo = capabilities.ReflectionInfo || {};
       
-      console.log('🔍 DEBUG: InheritanceHierarchy from C# service:', JSON.stringify(inheritanceHierarchy, null, 2));
+      console.error('🔍 DEBUG: InheritanceHierarchy from C# service:', JSON.stringify(inheritanceHierarchy, null, 2));
       
       // Build type groups using the explicit inheritance mapping from C# service
       const typeGroups: { [key: string]: any[] } = {};
@@ -1633,7 +1633,7 @@ export class ToolHandlers {
 
       // Create concrete types section with inheritance explanation
       const concreteTypeInfo = concreteTypes.length > 0 ? 
-        `�️ **D365 METADATA TYPE SYSTEM:**\n\n` +
+        ` ️ **D365 METADATA TYPE SYSTEM:**\n\n` +
         `   The D365 metadata API uses inheritance hierarchies. Methods expecting abstract base types\n` +
         `   (like AxTableField) must be called with concrete implementations.\n\n` +
         `🎯 **AVAILABLE CONCRETE TYPES:**\n` +
@@ -1678,10 +1678,10 @@ export class ToolHandlers {
         `   })\n\n`;
 
       // Debug logging
-      console.log('🔍 DEBUG methodsDocumentation length:', methodsDocumentation.length);
-      console.log('🔍 DEBUG methodsDocumentation preview:', methodsDocumentation.substring(0, 200));
-      console.log('🔍 DEBUG concreteTypeInfo length:', concreteTypeInfo.length);
-      console.log('🔍 DEBUG usageExamples length:', usageExamples.length);
+      console.error('🔍 DEBUG methodsDocumentation length:', methodsDocumentation.length);
+      console.error('🔍 DEBUG methodsDocumentation preview:', methodsDocumentation.substring(0, 200));
+      console.error('🔍 DEBUG concreteTypeInfo length:', concreteTypeInfo.length);
+      console.error('🔍 DEBUG usageExamples length:', usageExamples.length);
 
       const summary = `🎯 **MODIFICATION CAPABILITIES FOR ${objectType.toUpperCase()}**\n\n` +
         `📋 **Object Information:**\n` +
@@ -1726,7 +1726,7 @@ export class ToolHandlers {
   }
 
   static async executeObjectModification(args: any, requestId: string): Promise<any> {
-    console.log('🔧 Starting executeObjectModification with args:', JSON.stringify(args, null, 2));
+    console.error('🔧 Starting executeObjectModification with args:', JSON.stringify(args, null, 2));
     
     const actualArgs = args?.arguments || args;
     
@@ -1749,7 +1749,7 @@ export class ToolHandlers {
         `❌ Invalid format. This tool only accepts array-based modifications.\n` +
         `📋 Required format: { objectType, objectName, modifications: [{ methodName, parameters }] }\n` +
         `🚫 Validation errors: ${errors}\n` +
-        `� For single operations, use: modifications: [{ methodName: "AddField", parameters: {...} }]`
+        `  For single operations, use: modifications: [{ methodName: "AddField", parameters: {...} }]`
       );
     }
     
@@ -1757,7 +1757,7 @@ export class ToolHandlers {
     const objectName = arrayValidation.data.objectName;
     const modifications = arrayValidation.data.modifications;
     
-    console.log(`🔧 Processing ${modifications.length} modifications for ${objectType}:${objectName}`);
+    console.error(`🔧 Processing ${modifications.length} modifications for ${objectType}:${objectName}`);
 
     try {
       // Import D365ServiceClient dynamically to avoid circular dependencies
@@ -1765,9 +1765,9 @@ export class ToolHandlers {
       const client = new D365ServiceClient('mcp-xpp-d365-service', 10000, 60000); // Longer timeout for modifications
       
       // Connect to the service
-      console.log('🔗 Connecting to D365 service...');
+      console.error('🔗 Connecting to D365 service...');
       await client.connect();
-      console.log('✅ Connected to D365 service');
+      console.error('✅ Connected to D365 service');
 
       // Process each modification and collect results
       const operationResults: Array<{
@@ -1782,11 +1782,11 @@ export class ToolHandlers {
       let successCount = 0;
       let failureCount = 0;
 
-      console.log(`🚀 Starting execution of ${modifications.length} modification(s)...`);
+      console.error(`🚀 Starting execution of ${modifications.length} modification(s)...`);
       
       for (let i = 0; i < modifications.length; i++) {
         const modification = modifications[i];
-        console.log(`📝 [${i + 1}/${modifications.length}] Executing ${modification.methodName}...`);
+        console.error(`📝 [${i + 1}/${modifications.length}] Executing ${modification.methodName}...`);
         
         try {
           const startTime = Date.now();
@@ -1798,7 +1798,7 @@ export class ToolHandlers {
           );
           const processingTime = Date.now() - startTime;
           
-          console.log(`📦 [${i + 1}/${modifications.length}] Response:`, JSON.stringify(response, null, 2));
+          console.error(`📦 [${i + 1}/${modifications.length}] Response:`, JSON.stringify(response, null, 2));
           
           // Extract the result data
           const result = response.Data || response.data || response;
@@ -1852,7 +1852,7 @@ export class ToolHandlers {
 
       // Ensure we disconnect
       await client.disconnect();
-      console.log('🔌 Disconnected from D365 service');
+      console.error('🔌 Disconnected from D365 service');
 
       // Format the response based on whether it was single or array modification
       const isArrayResponse = modifications.length > 1;
@@ -1861,8 +1861,8 @@ export class ToolHandlers {
         // Array modification response
         const summary = `${successCount > 0 ? '✅' : '❌'} **BATCH MODIFICATION RESULTS**\n\n` +
           `🎯 **Target Object:** ${objectType}:${objectName}\n` +
-          `� **Summary:** ${successCount} succeeded, ${failureCount} failed (${modifications.length} total)\n\n` +
-          `� **Operation Results:**\n` +
+          `  **Summary:** ${successCount} succeeded, ${failureCount} failed (${modifications.length} total)\n\n` +
+          `  **Operation Results:**\n` +
           operationResults.map((op, index) => 
             `   ${index + 1}. ${op.success ? '✅' : '❌'} **${op.methodName}** ` +
             `(${op.processingTimeMs}ms)${op.success ? '' : `\n      💥 Error: ${op.error}`}`
